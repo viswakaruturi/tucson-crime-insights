@@ -69,22 +69,24 @@ with img2:
  
 st.markdown("""
 The first 2 PCA components capture roughly 20% of total variance (PC1 ~ 8%, PC2 ~ 12%).
-The scatter shows 4 distinct horizontal bands rather than crime-type clusters.
+The scatter shows 2 distinct horizontal bands rather than crime-type clusters.
 Colors represent crime types (0-7) but all crime types appear mixed within each band,
 confirming that the first two components do not separate crime types cleanly.
  
-The banded structure likely reflects the Hour feature (the strongest single feature
-at importance 0.34) creating discrete groups corresponding to time-of-day patterns.
+The two bands are driven by the **CallSource feature**: Web Reported crimes,
+which are predominantly Larceny, form one band while crimes reported through all
+other channels form the other. Within each band, the spread along PC1 is driven
+by the Hour feature.
 """)
  
-with st.expander("The Hour feature and PCA structure"):
+with st.expander("What drives the two bands?"):
     st.markdown("""
-The 4 horizontal bands in PC space likely correspond to broad time-of-day groupings
-captured by the Hour feature and its interactions with CallSource dummies. Since
-Hour is by far the most important feature (importance 0.34), it dominates the
-first principal components and creates a structured pattern in 2D projection.
-This is consistent with the EDA finding that crime activity follows strong
-hourly rhythms across all crime types.
+The 2 horizontal bands are explained by the CallSource feature: Web Reported crimes
+(overwhelmingly Larceny) occupy one band while all other call sources occupy the other.
+This is consistent with the EDA finding that Web Reported incidents are almost exclusively
+Larceny (102,000 out of ~103,000 records). Within each band, the spread along PC1 is
+driven by the Hour feature, which at importance 0.34 is the single strongest predictor.
+Crime types are completely mixed within each band, confirming no clean separation exists.
 """)
  
 st.divider()
@@ -214,8 +216,7 @@ feature space is genuinely high-dimensional with no dominant low-rank structure.
 Larceny-heavy incidents from more balanced crime type distributions, with a
 ~ 1.5 hour mean Hour difference between clusters.
  
-- The 2D PCA scatter shows 4 horizontal bands likely driven by the Hour feature,
-but all crime types are mixed within each band with no clean separation by crime type.
+- The 2D PCA scatter shows 2 horizontal bands driven by the CallSource feature: Web Reported crimes form one band, all other call sources form the other. Crime types are completely mixed within each band with no clean separation.
  
 - These results complement classification: the difficulty of unsupervised
 clustering mirrors the difficulty of supervised prediction, both pointing to
