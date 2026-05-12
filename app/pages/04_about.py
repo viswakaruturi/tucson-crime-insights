@@ -121,6 +121,7 @@ with col_f:
 - Python
 - pandas
 - scikit-learn
+- scipy
 - Plotly
 - Streamlit
 """)

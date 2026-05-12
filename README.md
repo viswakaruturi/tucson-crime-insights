@@ -100,8 +100,8 @@ streamlit run app/main.py
 
 ## Author
 
-**Viswa Sushanth Karuturi**
-B.S. in Statistics & Data Science, B.S. in Computer Science
+**Viswa Sushanth Karuturi**  
+B.S. in Statistics & Data Science, B.S. in Computer Science  
 University of Arizona
 
 [LinkedIn](https://www.linkedin.com/in/viswakaruturi/) | [GitHub](https://github.com/viswakaruturi) | [Website](https://viswakaruturi.com/)
