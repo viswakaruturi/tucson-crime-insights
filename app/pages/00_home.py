@@ -6,17 +6,9 @@ import plotly.express as px
 
 df = load_data()
 
-# cleaning crime labels by removing prefixes and title-casing
-def clean_crime(label):
-    if " - " in label:
-        return label.split(" - ", 1)[1].title()
-    return label.title()
-
-df["CrimeLabel"] = df["UCRDescription"].apply(clean_crime)
-
 # header
 st.title("Tucson Crime Insights")
-st.markdown("**DATA 474** | Viswa Sushanth Karuturi | Spring 2026")
+st.markdown("DATA 474 | Viswa Sushanth Karuturi | Spring 2026")
 st.divider()
 
 # 5 key metrics
@@ -25,7 +17,7 @@ m1.metric("Total Incidents", f"{len(df):,}")
 m2.metric("Years Covered", f"{df['Year'].min()} - {df['Year'].max()}")
 m3.metric("Crime Types", df["UCRDescription"].nunique())
 m4.metric("Divisions", df["Division"].nunique())
-m5.metric("Wards", df[df["Ward"] != "0"]["Ward"].nunique())
+m5.metric("Wards", (df[df["Ward"] != "0"]["Ward"].nunique()) - 1)
 
 st.divider()
 
@@ -38,10 +30,11 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.subheader("Total Incidents Overview")
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Incidents", f"{len(df):,}")
     c2.metric("Avg per Year", f"{len(df) // df['Year'].nunique():,}")
-    c3.metric("Avg per Day", f"{len(df) // (df['Year'].nunique() * 365):,}")
+    c3.metric("Avg per Month", f"{len(df) // (df['Year'].nunique() * 12):,}")
+    c4.metric("Avg per Day", f"{len(df) // (df['Year'].nunique() * 365):,}")
 
     st.markdown("---")
 
@@ -55,7 +48,7 @@ with tab1:
 
 # tab 2: years covered
 with tab2:
-    st.subheader("Years Covered: 2018 – 2025")
+    st.subheader("Years Covered: 2018 - 2025")
 
     yearly = df.groupby("Year").size().reset_index(name = "Incidents")
     fig2 = px.bar(yearly, x = "Year", y = "Incidents",
@@ -166,4 +159,4 @@ with tab5:
         st.plotly_chart(fig8, width = "stretch")
 
 st.divider()
-st.caption("Data source: Tucson Police Department Open Data Portal — https://policeanalysis.tucsonaz.gov/pages/reported-crimes | GitHub: https://github.com/viswakaruturi/tucson-crime-insights")
+st.caption("Data source: Tucson Police Department Open Data Portal - https://policeanalysis.tucsonaz.gov/pages/reported-crimes | GitHub: https://github.com/viswakaruturi/tucson-crime-insights")
