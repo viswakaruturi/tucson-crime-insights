@@ -1,45 +1,47 @@
 import streamlit as st
 import pandas as pd
-
+ 
 st.title("Classification")
 st.markdown("Predicting Crime Type from Temporal and Spatial Features")
 st.divider()
-
+ 
 RESULTS = "results/03"
-
+ 
 # section 1: problem setup
 st.subheader("1. Problem Setup")
-
+ 
 st.markdown("""
 The goal is to predict **UCR crime type**: 8 classes (Homicide, Sexual Assault, Robbery,
 Assault Aggravated, Burglary, Larceny, GTA, Arson), from features derived from time,
 location, and how the crime was reported.
 """)
-
+ 
 st.warning("""
 **Class imbalance:** Larceny accounts for ~ 70% of all incidents (170,264 out of 243,127).
 This heavily skews model performance. We use **F1 Macro** (unweighted average across all
 classes) rather than accuracy to fairly evaluate performance across all 8 crime types.
 A model that just predicts Larceny every time would get 70% accuracy but F1 Macro near zero.
 """)
-
+ 
 st.divider()
-
+ 
 # section 2: data prep
 st.subheader("2. Data Preparation")
-
+ 
 st.markdown("""
 **Columns dropped:** IncidentID, UCR, Offense (identifiers or redundant codes, not predictive features)
-
-**One-hot encoding** applied to: Division, CallSource, Ward, Month, Day
-
+ 
+**One-hot encoding** applied to: Division, CallSource, Ward, Month, Day (with drop_first=True to avoid multicollinearity, expanding the feature set to 32 columns)
+ 
+**Missing values handled:** Ward nulls filled with 0 (unknown), CallSource nulls filled with "Unknown" to retain the record rather than dropping it
+ 
 **Target encoding:** UCRDescription label-encoded to integers (0 - 7) using LabelEncoder
-
+ 
 **Train-test split:** 80/20 stratified split to preserve class proportions
 - Training set: ~ 194,500 samples
 - Test set: ~ 48,626 samples
 """)
-
+ 
 with st.expander("Why stratified split?"):
     st.markdown("""
 With heavy class imbalance, a random split risks putting all or most Homicide cases
@@ -47,34 +49,34 @@ in one set. Stratified splitting ensures each class appears in both train and te
 at the same proportion as the full dataset. This is critical for reliable evaluation
 of minority class performance.
 """)
-
+ 
 st.divider()
-
+ 
 # section 3: feature selection
 st.subheader("3. Feature Selection")
-
+ 
 st.markdown("#### Attempt 1 - Logistic Regression with L1 Penalty")
-
+ 
 st.markdown("""
 The first approach was to use LogisticRegressionCV with L1 penalty (LASSO-style
 regularization) to automatically shrink uninformative feature coefficients to zero.
 """)
-
+ 
 st.error("""
 **Result:** L1 regularization was too aggressive, it reduced the feature set to only
 3 - 4 features, discarding most of the temporal and spatial signals. A model trained on
 3 features performed poorly and was not useful for meaningful crime type prediction.
 """)
-
+ 
 st.markdown("#### Attempt 2 - Random Forest Feature Importances")
-
+ 
 st.markdown("""
 A preliminary Random Forest trained on all features ranked them by Gini importance.
 Features with importance **> 0.01** were retained, giving 22 features.
 """)
-
+ 
 st.image(f"{RESULTS}/feature_importances.png", width = "stretch")
-
+ 
 st.markdown("""
 **22 features selected:**
 `Hour, Year, CallSource_Web Reported, CallSource_Officer-Initiated,
@@ -83,7 +85,7 @@ Month_May, Month_March, Month_October, Month_January, Month_February,
 Month_July, Month_August, Month_June, Month_September, Month_November,
 Month_December, Division_Midtown`
 """)
-
+ 
 with st.expander("Key findings - feature importance"):
     st.markdown("""
 - Hour is the strongest predictor (importance ~ 0.34). Time of day is the single
@@ -94,41 +96,41 @@ with st.expander("Key findings - feature importance"):
 - Day of week features contribute modestly (~ 0.015 - 0.02 each)
 - Division_Midtown is the only geographic feature that crossed the 0.01 threshold
 """)
-
+ 
 st.divider()
-
+ 
 # section 4: scaling 
 st.subheader("4. Scaling")
-
+ 
 st.markdown("""
 **StandardScaler** applied to the 22 selected features for models sensitive to feature
 magnitude: Logistic Regression, LDA, and SVM.
-
+ 
 Tree-based models (Decision Tree, Random Forest) use unscaled selected features
 since they split on thresholds and are not affected by feature scale.
 """)
-
+ 
 st.divider()
-
+ 
 # section 5: models trained
 st.subheader("5. Models Trained")
-
+ 
 st.markdown("""
 Five classifiers trained on the selected features with balanced class weights
 where supported to partially offset the Larceny dominance:
-
+ 
 - **Multinomial Logistic Regression** - linear baseline, solver = lbfgs, balanced class weights
 - **LDA** - linear discriminant analysis with uniform priors across 8 classes
 - **Decision Tree** - non-linear, balanced class weights
 - **Random Forest** - ensemble of 100 trees, balanced class weights
 - **SVM** - RBF kernel, balanced class weights
 """)
-
+ 
 st.divider()
-
+ 
 # section 6: best model
 st.subheader("6. Best Model - Random Forest")
-
+ 
 st.markdown("""
 Random Forest is the best performing model with 56% accuracy and CV F1 Macro of 0.209.
 It achieves the highest Larceny F1 (0.79) and best GTA F1 (0.20) of any model.
@@ -137,13 +139,13 @@ class weights help distribute attention across crime types. Homicide (F1 0.04) a
 Arson (F1 0.07) remain low, reflecting the fundamental difficulty of predicting rare
 events from temporal and spatial features alone.
 """)
-
+ 
 col_a, col_b = st.columns(2)
 with col_a:
     st.image(f"{RESULTS}/rf_classification_report.png", width = "stretch")
 with col_b:
     st.image(f"{RESULTS}/rf_confusion_matrix.png", width = "stretch")
-
+ 
 with st.expander("Confusion matrix interpretation - Random Forest"):
     st.markdown("""
 Random Forest has the strongest diagonal of all models. Mid-frequency classes like
@@ -151,16 +153,16 @@ Assault Aggravated (802), Burglary (868), and GTA (855) show higher true positiv
 counts than any other model. This confirms the ensemble's superior ability to
 separate overlapping crime type distributions in feature space.
 """)
-
+ 
 st.divider()
-
+ 
 # section 7: other models 
 st.subheader("7. Other Models")
-
+ 
 tab_lr, tab_lda, tab_dt, tab_svm = st.tabs([
     "Logistic Regression", "LDA", "Decision Tree", "SVM"
 ])
-
+ 
 with tab_lr:
     st.markdown("""
 Logistic Regression achieves 45% accuracy and F1 Macro of 0.16.
@@ -180,7 +182,7 @@ Homicide and Robbery. Most non-Larceny incidents end up predicted as one of thes
 two classes, a symptom of the linear decision boundary failing to separate
 overlapping crime type clusters.
 """)
-
+ 
 with tab_lda:
     st.markdown("""
 LDA achieves 50% accuracy and CV F1 Macro of 0.178. It shows the best Homicide
@@ -199,7 +201,7 @@ LDA spreads errors more evenly than Logistic Regression. Many minority class inc
 get predicted as Homicide (top-left column heavily populated), reflecting the model's
 tendency to predict extreme classes when uncertain.
 """)
-
+ 
 with tab_dt:
     st.markdown("""
 Decision Tree achieves 52% accuracy and CV F1 Macro of 0.205, the second best overall.
@@ -218,7 +220,7 @@ Healthier diagonal than linear models. Mid-frequency classes show more true posi
 reflecting the tree's ability to carve out feature-space regions for individual crime
 types by splitting on Hour, Year, and CallSource thresholds.
 """)
-
+ 
 with tab_svm:
     st.markdown("""
 SVM with RBF kernel achieves 47% accuracy and CV F1 Macro of 0.168. Despite the
@@ -237,27 +239,27 @@ The most diffuse confusion matrix errors spread across all predicted classes wit
 no clear pattern. The Larceny diagonal (21,223) is the lowest among all models,
 meaning SVM also underperforms on the dominant class compared to others.
 """)
-
+ 
 st.divider()
-
+ 
 # section 8: cv comparison 
 st.subheader("8. 5-Fold Stratified CV Comparison")
-
+ 
 cv_data = {
     "Model": ["Logistic Regression", "LDA", "Decision Tree", "Random Forest", "SVM"],
-    "CV F1 Macro": [0.1637, 0.1780, 0.2045, 0.2090, 0.1683],
+    "CV F1 Macro": ["0.1637 +/- 0.0011", "0.1780 +/- 0.0011", "0.2045 +/- 0.0025", "0.2090 +/- 0.0018", "0.1683 +/- 0.0006"],
     "Test Accuracy": [0.45, 0.50, 0.52, 0.56, 0.47],
     "Test F1 Macro": [0.16, 0.18, 0.20, 0.21, 0.17],
 }
 cv_df = pd.DataFrame(cv_data)
-
+ 
 col_c, col_d = st.columns([1, 1])
 with col_c:
     st.image(f"{RESULTS}/model_comparison.png", width = "stretch")
 with col_d:
     st.markdown("##### Scores at a glance")
     st.dataframe(cv_df, hide_index = True, width = "stretch")
-
+ 
 with st.expander("Why F1 Macro over accuracy?"):
     st.markdown("""
 Accuracy is misleading with imbalanced classes. A model that always predicts Larceny
@@ -265,12 +267,12 @@ would achieve ~70% accuracy while being completely useless for every other crime
 F1 Macro gives equal importance to rare classes like Homicide and Arson, forcing the
 model to demonstrate predictive ability across all crime types.
 """)
-
+ 
 st.divider()
-
+ 
 # section 9: conclusion 
 st.subheader("9. Conclusion")
-
+ 
 st.markdown("""
 - Crime type is genuinely hard to predict from temporal and spatial features alone.
   F1 Macro of 0.16 - 0.21 reflects the limits of what hour, day, month, division, and
