@@ -131,8 +131,8 @@ st.divider()
 st.subheader("Report")
 
 st.markdown("**Final Report**")
-st.download_button("Download Report (PDF)", data = b"", file_name = "report.pdf",
-    disabled = True)
+with open("reports/Final Report.pdf", "rb") as f:
+    st.download_button("Download Report (PDF)", data = f, file_name = "report.pdf")
 
 st.divider()
 
