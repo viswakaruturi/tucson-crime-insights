@@ -73,7 +73,7 @@ The scatter shows 2 distinct horizontal bands rather than crime-type clusters.
 Colors represent crime types (0-7) but all crime types appear mixed within each band,
 confirming that the first two components do not separate crime types cleanly.
  
-The two bands are driven by the **CallSource feature**: Web Reported crimes,
+The two bands are driven by the CallSource feature: Web Reported crimes,
 which are predominantly Larceny, form one band while crimes reported through all
 other channels form the other. Within each band, the spread along PC1 is driven
 by the Hour feature.
@@ -105,7 +105,7 @@ The elbow plot shows no clear elbow: inertia decreases linearly from k = 2 to k 
 with no obvious inflection point. This suggests the data does not naturally partition
 into a small number of compact, well-separated clusters in the 22-dimensional feature space.
  
-Given the absence of a clear elbow, **k = 2** was selected as the most interpretable
+Given the absence of a clear elbow, k = 2 was selected as the most interpretable
 starting point.
 """)
  
